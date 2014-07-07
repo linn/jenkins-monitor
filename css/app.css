@@ -1,13 +1,50 @@
-.problem .alert {
+.job .alert {
 	margin-bottom: 0
 }
 
-.run .alert {
-	margin-bottom: 0
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+    -webkit-transform-origin:100% 0%;
+    -ms-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -webkit-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+    -webkit-transform-origin:100% 0%;
+    -ms-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+  }
+}
+@-webkit-keyframes rotating /* Safari and Chrome */ {
+  from {
+    -webkit-transform-origin:50% 50%;
+    transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -webkit-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+  }
+  to {
+    -webkit-transform-origin:50% 50%;
+    transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+  }
 }
 
-.abort .alert {
-	margin-bottom: 0
+.objrotate {   
+  -webkit-animation: rotating 2s linear infinite;
+  -moz-animation: rotating 2s linear infinite;
+  -ms-animation: rotating 2s linear infinite;
+  -o-animation: rotating 2s linear infinite;
+  animation: rotating 2s linear infinite; 
 }
 
 @-webkit-keyframes blink {
@@ -32,12 +69,13 @@
         opacity:1;
     }
 }
+
 .objblink {
--webkit-transition: all 1s ease-in-out;
-    -moz-transition: all 1s ease-in-out;
-    -o-transition: all 1s ease-in-out;
-    -ms-transition: all 1s ease-in-out;
-    transition: all 1s ease-in-out;
+-webkit-transition: blink 1s ease-in-out;
+    -moz-transition: blink 1s ease-in-out;
+    -o-transition: blink 1s ease-in-out;
+    -ms-transition: blink 1s ease-in-out;
+    transition: blink 1s ease-in-out;
     
     -webkit-animation-direction: normal;
     -webkit-animation-duration: 2s;
@@ -45,7 +83,7 @@
     -webkit-animation-name: blink;
     -webkit-animation-timing-function: ease-in-out;
     
--moz-animation-direction: normal;
+    -moz-animation-direction: normal;
     -moz-animation-duration: 2s;
     -moz-animation-iteration-count: infinite;
     -moz-animation-name: blink;
