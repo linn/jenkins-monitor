@@ -17,7 +17,7 @@ var addAbortedJob = function (job) {
 	$(document).find('.aborted').append(html);
 };
 var addSeaOfGreen = function (job) {
-	var html = $.parseHTML('<h2 class="col-xs-12 alliswell alert alert-success"><span class="col-xs-1 glyphicon glyphicon-thumbs-up"></span> <div class="col-xs-11 name">Everything Is Awesome</div></h2>');
+	var html = $.parseHTML('<h2 class="col-xs-12 alliswell alert alert-success"><span class="col-xs-1 glyphicon glyphicon-thumbs-up"></span> <div class="col-xs-11 name">Everything Is AWESOME!!!</div></h2>');
 	$(document).find('.okay').append(html);
 };
 var removeAllJobs = function (job) {
