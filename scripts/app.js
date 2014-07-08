@@ -1,10 +1,4 @@
-(function (_, $) {
-
-	var config = {
-		"jenkinsRoot": "http://it.linn.co.uk/hudson/",
-		"blacklistedJobs": [ "LinnRecords (13) - Deploy All", "LinnRecords (14) - Nightly" ]
-	};
-
+(function (_, $, config) {
 	var init = function (config) {
 
 		var jobTemplate = _.template('<a class="job <%- type %>" href="<%- jobUrl %>"><h2 class="col-xs-12 alert alert-<%- alertState %>"><div class="col-xs-1"><span class="<%- iconCss %>"></span></div><div class="col-xs-11 name"><%- jobName %></div></h2></a>');
@@ -88,4 +82,4 @@
 	updateStatus();
 	setInterval(updateStatus, 10000);
 
-})(_, $);
+})(_, $, config);
