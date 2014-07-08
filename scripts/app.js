@@ -43,6 +43,10 @@
 			return _.contains(config.blacklistedJobs, job.name);
 		};
 
+		var nightlyJobs = function (job) {
+			return job.name.indexOf('Nightly') > -1;
+		};
+
 		return function () {
 			$.ajax({
 				dataType: 'jsonp',
@@ -51,6 +55,7 @@
 					var problemJobs = _.chain(data.jobs)
 						.where({'color': 'red'})
 						.reject(unwantedJobs)
+						.reject(nightlyJobs)
 						.map(toProblem)
 						.value();
 					var runningJobs = _.chain(data.jobs)
@@ -63,8 +68,14 @@
 						.reject(unwantedJobs)
 						.map(toAbort)
 						.value();
+					var unstableJobs = _.chain(data.jobs)
+						.where({'color': 'yellow'})
+						.reject(unwantedJobs)
+						.reject(nightlyJobs)
+						.map(toProblem)
+						.value();
 					$(document).find('.job').remove();
-					var jobs = _.union(problemJobs, runningJobs, abortedJobs);
+					var jobs = _.union(problemJobs, runningJobs, abortedJobs, unstableJobs);
 					if (jobs.length > 0) {
 						_.each(jobs, function (job) {
 							var dom = jobTemplate(job);
