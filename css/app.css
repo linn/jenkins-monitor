@@ -2,6 +2,11 @@
 	margin-bottom: 0
 }
 
+.stats {
+    margin-top: 5em;
+    padding: 2em;
+}
+
 @keyframes rotating {
   from {
     transform: rotate(0deg);

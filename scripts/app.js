@@ -5,6 +5,8 @@
 
 		var seaOfGreen = _.template('<article class="job"><h2 class="col-xs-12 alliswell alert alert-success"><span class="col-xs-1 glyphicon glyphicon-thumbs-up"></span> <div class="col-xs-11 name">Everything Is AWESOME!!!</div></h2></article>');
 
+		var awesomeMeter = _.template('<h2 class="stats col-xs-12 alert alert-info counter">We&apos;ve been awesome for <%- minutesSinceLastFail %> minutes!</h2>');
+
 		var toProblem = function (job) {
 			return {
 				type: 'problem',
@@ -63,6 +65,35 @@
 
 		};
 
+		var supportsHtml5Storage = function() {
+			try {
+				return 'localStorage' in window && window['localStorage'] !== null;
+			} catch (e) {
+				return false;
+			}
+		};
+
+		var utcNow = function () {
+			var now = new Date();
+			return Date.UTC(now.getUTCFullYear(),now.getUTCMonth(), now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(), now.getUTCMilliseconds());
+		};
+
+		var storeFailureTime = function () {
+			if (supportsHtml5Storage()) {
+				localStorage.setItem("lastknownFailureTime", utcNow());
+			}
+		};
+
+		var calculateMinutesSinceFailure = function () {
+			var now = utcNow();
+			if (supportsHtml5Storage()) {
+				var lastFailureTime = localStorage.getItem("lastknownFailureTime");
+				if (lastFailureTime) {
+					return Math.round((now - lastFailureTime) / 60000);
+				}
+			}
+		};
+
 		var statusThenName = function (job) {
 			return job.type + job.name;
 		};
@@ -79,6 +110,7 @@
 						.reject(nonRunningNightlyJobs)
 						.sortBy(statusThenName)
 						.value();
+
 					$(document).find('.job').remove();
 					if (jobs.length > 0) {
 						_.each(jobs, function (job) {
@@ -87,6 +119,15 @@
 						});
 					} else {
 						$(document).find('.jobs').append(seaOfGreen());
+					}
+
+					$(document).find('.stats').remove();
+					if (_.findWhere(jobs, { type: 'problem' })) {
+						storeFailureTime();
+					}
+					var minutesSinceLastFail = calculateMinutesSinceFailure();
+					if (minutesSinceLastFail > 0) {
+						$(document).find('.jobs').append(awesomeMeter({ minutesSinceLastFail: minutesSinceLastFail }));
 					}
 				}
 			});
