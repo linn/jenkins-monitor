@@ -1,37 +1,37 @@
 (function (_, $, config) {
 	var init = function (config) {
 
-		var jobTemplate = _.template('<a class="job <%- type %>" href="<%- jobUrl %>"><h2 class="col-xs-12 alert alert-<%- alertState %>"><div class="col-xs-1"><span class="<%- iconCss %>"></span></div><div class="col-xs-11 name"><%- jobName %></div></h2></a>');
+		var jobTemplate = _.template('<article class="job <%- type %>"><h2 class="col-xs-12 alert alert-<%- alertState %>"><div class="col-xs-1"><span class="<%- iconCss %>"></span></div><div class="col-xs-11 name"><%- name %></div></h2></article>');
 
-		var seaOfGreen = _.template('<a class="job"><h2 class="col-xs-12 alliswell alert alert-success"><span class="col-xs-1 glyphicon glyphicon-thumbs-up"></span> <div class="col-xs-11 name">Everything Is AWESOME!!!</div></h2></a>');
+		var seaOfGreen = _.template('<article class="job"><h2 class="col-xs-12 alliswell alert alert-success"><span class="col-xs-1 glyphicon glyphicon-thumbs-up"></span> <div class="col-xs-11 name">Everything Is AWESOME!!!</div></h2></article>');
 
 		var toProblem = function (job) {
 			return {
 				type: 'problem',
-				jobUrl: job.url,
+				url: job.url,
 				alertState: 'danger',
 				iconCss: 'glyphicon glyphicon-thumbs-down',
-				jobName: job.name
+				name: job.name
 			};
 		};
 
 		var toRunning = function (job) {
 			return {
-				type: 'run',
-				jobUrl: job.url,
+				type: 'running',
+				url: job.url,
 				alertState: 'info',
 				iconCss: 'objrotate glyphicon glyphicon-refresh',
-				jobName: job.name
+				name: job.name
 			};
 		};
 
 		var toAbort = function (job) {
 			return {
-				type: 'abort',
-				jobUrl: job.url,
+				type: 'aborted',
+				url: job.url,
 				alertState: 'warning',
 				iconCss: 'glyphicon glyphicon-stop',
-				jobName: job.name
+				name: job.name
 			};
 		};
 
@@ -43,8 +43,28 @@
 			return _.contains(config.blacklistedJobs, job.name);
 		};
 
-		var nightlyJobs = function (job) {
-			return job.name.indexOf('Nightly') > -1;
+		var nonRunningNightlyJobs = function (job) {
+			return job.name.indexOf('Nightly') > -1 && job.type !== 'running';
+		};
+
+		var toJob = function (job) {
+			if (job.color.indexOf('_anime') > -1) {
+				return toRunning(job);
+			}
+			if (job.color === 'red') {
+				return toProblem(job);
+			}
+			if (job.color === 'aborted') {
+				return toAbort(job);
+			}
+			if (job.color === 'yellow') {
+				return toProblem(job);
+			}
+
+		};
+
+		var statusThenName = function (job) {
+			return job.type + job.name;
 		};
 
 		return function () {
@@ -52,30 +72,14 @@
 				dataType: 'jsonp',
 				url: config.jenkinsRoot + 'api/json?jsonp=?',
 				success: function (data) {
-					var problemJobs = _.chain(data.jobs)
-						.where({'color': 'red'})
+					var jobs = _.chain(data.jobs)
+						.map(toJob)
+						.compact()
 						.reject(unwantedJobs)
-						.reject(nightlyJobs)
-						.map(toProblem)
-						.value();
-					var runningJobs = _.chain(data.jobs)
-						.filter(currentlyRunning)
-						.reject(unwantedJobs)
-						.map(toRunning)
-						.value();
-					var abortedJobs = _.chain(data.jobs)
-						.where({'color': 'aborted'})
-						.reject(unwantedJobs)
-						.map(toAbort)
-						.value();
-					var unstableJobs = _.chain(data.jobs)
-						.where({'color': 'yellow'})
-						.reject(unwantedJobs)
-						.reject(nightlyJobs)
-						.map(toProblem)
+						.reject(nonRunningNightlyJobs)
+						.sortBy(statusThenName)
 						.value();
 					$(document).find('.job').remove();
-					var jobs = _.union(problemJobs, runningJobs, abortedJobs, unstableJobs);
 					if (jobs.length > 0) {
 						_.each(jobs, function (job) {
 							var dom = jobTemplate(job);
