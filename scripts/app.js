@@ -5,7 +5,7 @@
 
 		var seaOfGreen = _.template('<article class="job"><h2 class="col-xs-12 alliswell alert alert-success"><span class="col-xs-1 glyphicon glyphicon-thumbs-up"></span> <div class="col-xs-11 name">Everything Is AWESOME!!!</div></h2></article>');
 
-		var awesomeMeter = _.template('<h2 class="stats col-xs-12 alert alert-info counter">We&apos;ve been awesome for <%- minutesSinceLastFail %> minutes!</h2>');
+		var awesomeMeter = _.template('<h2 class="stats col-xs-12 well counter">We&apos;ve been awesome for <%- minutesSinceLastFail %> minutes!</h2>');
 
 		var toProblem = function (job) {
 			return {
