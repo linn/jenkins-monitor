@@ -121,13 +121,16 @@
 						$(document).find('.jobs').append(seaOfGreen());
 					}
 
-					$(document).find('.stats').remove();
 					if (_.findWhere(jobs, { type: 'problem' })) {
 						storeFailureTime();
 					}
-					var minutesSinceLastFail = calculateMinutesSinceFailure();
-					if (minutesSinceLastFail > 0) {
-						$(document).find('.jobs').append(awesomeMeter({ minutesSinceLastFail: minutesSinceLastFail }));
+
+					$(document).find('.stats').remove();
+					if (!_.findWhere(jobs, { type: 'running' })) {
+						var minutesSinceLastFail = calculateMinutesSinceFailure();
+						if (minutesSinceLastFail > 0) {
+							$(document).find('.jobs').append(awesomeMeter({ minutesSinceLastFail: minutesSinceLastFail }));
+						}
 					}
 				}
 			});
