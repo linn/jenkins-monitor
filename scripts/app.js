@@ -5,7 +5,7 @@
 
 		var seaOfGreen = _.template('<article class="job"><h2 class="col-xs-12 alliswell alert alert-success"><span class="col-xs-1 glyphicon glyphicon-thumbs-up"></span> <div class="col-xs-11 name">Everything Is AWESOME!!!</div></h2></article>');
 
-		var awesomeMeter = _.template('<h2 class="stats col-xs-12 well counter">We&apos;ve been awesome for <%- minutesSinceLastFail %> minutes!</h2>');
+		var awesomeMeter = _.template('<h2 class="stats col-xs-12 well counter">We&apos;ve been awesome for <%- relativeAwesomeness %>!</h2>');
 
 		var toProblem = function (job) {
 			return {
@@ -73,23 +73,17 @@
 			}
 		};
 
-		var utcNow = function () {
-			var now = new Date();
-			return Date.UTC(now.getUTCFullYear(),now.getUTCMonth(), now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(), now.getUTCMilliseconds());
-		};
-
 		var storeFailureTime = function () {
 			if (supportsHtml5Storage()) {
-				localStorage.setItem("lastknownFailureTime", utcNow());
+				localStorage.setItem("lastknownFailureTime", moment().utc());
 			}
 		};
 
-		var calculateMinutesSinceFailure = function () {
-			var now = utcNow();
+		var getLastFailureTime = function () {
 			if (supportsHtml5Storage()) {
 				var lastFailureTime = localStorage.getItem("lastknownFailureTime");
 				if (lastFailureTime) {
-					return Math.round((now - lastFailureTime) / 60000);
+					return moment.utc(lastFailureTime);
 				}
 			}
 		};
@@ -127,9 +121,9 @@
 
 					$(document).find('.stats').remove();
 					if (!_.findWhere(jobs, { type: 'running' })) {
-						var minutesSinceLastFail = calculateMinutesSinceFailure();
-						if (minutesSinceLastFail > 0) {
-							$(document).find('.jobs').append(awesomeMeter({ minutesSinceLastFail: minutesSinceLastFail }));
+						var lastFailureTime = getLastFailureTime();
+						if (lastFailureTime && (moment.utc() - lastFailureTime) > 60000) {
+							$(document).find('.jobs').append(awesomeMeter({ relativeAwesomeness: lastFailureTime.fromNow(true) }));
 						}
 					}
 				}
