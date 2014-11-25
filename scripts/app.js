@@ -62,7 +62,6 @@
 			if (job.color === 'yellow') {
 				return toProblem(job);
 			}
-
 		};
 
 		var supportsHtml5Storage = function() {
@@ -88,45 +87,127 @@
 			}
 		};
 
+		var updateStatus = function (status) {
+			var history, mostRecentStatus;
+			if (supportsHtml5Storage()) {
+				try {
+					history = JSON.parse(localStorage.getItem("statusHistory"));
+				} catch (e) {
+				}
+				if (!_.isArray(history)) {
+					history = [];
+				}
+				mostRecentStatus = _.last(history);
+				if (!mostRecentStatus || mostRecentStatus.status !== status) {
+					history.push({
+						time: moment().utc(),
+						status: status
+					});
+				}
+				localStorage.setItem("statusHistory", JSON.stringify(history));
+				return history;
+			}
+		};
+
+		var statusHistory = function () {
+			var history;
+			if (supportsHtml5Storage()) {
+				try {
+					history = JSON.parse(localStorage.getItem("statusHistory"));
+				} catch (e) {
+				}
+				if (!_.isArray(history)) {
+					return [];
+				}
+				return _.chain(history)
+					.sortBy('time')
+					.reject(oldStatus)
+					.value();
+			}
+		};
+
 		var statusThenName = function (job) {
 			return job.type + job.name;
+		};
+
+		var statusOverview = function (jobs) {
+			if (_.findWhere(jobs, { type: 'problem' })) {
+				return 'problem';
+			}
+			if (_.findWhere(jobs, { type: 'running' })) {
+				return 'running';
+			}
+			if (_.findWhere(jobs, { type: 'aborted' })) {
+				return 'aborted';
+			}
+			return 'ok';
+		};
+
+		var oldStatus = function (status) {
+			var cutoff = moment().subtract(1, 'days');
+			return moment(status.time).isBefore(cutoff);
+		};
+
+		var statusSummary = function (statusHistory) {
+			var start = moment(_.first(statusHistory).time).valueOf(),
+				end = moment(_.last(statusHistory).time).valueOf();
+			return _.chain(statusHistory)
+					.map(function (instance) {
+						var time = moment(instance.time).valueOf();
+						return {
+							fraction: (time - start) / (end - start),
+							time: instance.time,
+							status: instance.status
+						};
+					})
+					.value();
+		};
+
+		var render = function (data) {
+			var statusThatWeAre,
+				jobs;
+
+			jobs = _.chain(data.jobs)
+				.map(toJob)
+				.compact()
+				.reject(unwantedJobs)
+				.reject(nonRunningNightlyJobs)
+				.sortBy(statusThenName)
+				.value();
+
+			$(document).find('.job').remove();
+			if (jobs.length > 0) {
+				_.each(jobs, function (job) {
+					var dom = jobTemplate(job);
+					$(document).find('.jobs').append(dom);
+				});
+			} else {
+				$(document).find('.jobs').append(seaOfGreen());
+			}
+
+			statusThatWeAre = statusOverview(jobs);
+			updateStatus(statusThatWeAre);
+
+			if (statusThatWeAre === "problem") {
+				storeFailureTime();
+			}
+
+			$(document).find('.stats').remove();
+			if (statusThatWeAre !==  'running' ) {
+				var lastFailureTime = getLastFailureTime();
+				if (lastFailureTime && (moment.utc() - lastFailureTime) > 60000) {
+					$(document).find('.jobs').append(awesomeMeter({ relativeAwesomeness: lastFailureTime.fromNow(true) }));
+				}
+			}
+
+			var temp = statusSummary(statusHistory());
 		};
 
 		return function () {
 			$.ajax({
 				dataType: 'jsonp',
 				url: config.jenkinsRoot + 'api/json?jsonp=?',
-				success: function (data) {
-					var jobs = _.chain(data.jobs)
-						.map(toJob)
-						.compact()
-						.reject(unwantedJobs)
-						.reject(nonRunningNightlyJobs)
-						.sortBy(statusThenName)
-						.value();
-
-					$(document).find('.job').remove();
-					if (jobs.length > 0) {
-						_.each(jobs, function (job) {
-							var dom = jobTemplate(job);
-							$(document).find('.jobs').append(dom);
-						});
-					} else {
-						$(document).find('.jobs').append(seaOfGreen());
-					}
-
-					if (_.findWhere(jobs, { type: 'problem' })) {
-						storeFailureTime();
-					}
-
-					$(document).find('.stats').remove();
-					if (!_.findWhere(jobs, { type: 'running' })) {
-						var lastFailureTime = getLastFailureTime();
-						if (lastFailureTime && (moment.utc() - lastFailureTime) > 60000) {
-							$(document).find('.jobs').append(awesomeMeter({ relativeAwesomeness: lastFailureTime.fromNow(true) }));
-						}
-					}
-				}
+				success: render
 			});
 		};
 	};
