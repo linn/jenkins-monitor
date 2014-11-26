@@ -144,13 +144,13 @@
 		};
 
 		var oldStatus = function (status) {
-			var cutoff = moment().subtract(1, 'days');
+			var cutoff = moment().subtract(config.daysToSummarise, 'days');
 			return moment(status.time).isBefore(cutoff);
 		};
 
 		var statusSummary = function (statusHistory) {
 			var start = moment(_.first(statusHistory).time).valueOf(),
-				end = moment(_.last(statusHistory).time).valueOf();
+				end = moment().valueOf();
 			return _.chain(statusHistory)
 					.map(function (instance) {
 						var time = moment(instance.time).valueOf();
