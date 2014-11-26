@@ -8,6 +8,18 @@
     padding: 2em;
 }
 
+.summary { 
+    margin-top: 20px;
+}
+
+.progress {
+    margin: 20px;
+}
+
+.progress-bar-unknown {
+    background-color: transparent;;
+}
+
 @keyframes rotating {
   from {
     transform: rotate(0deg);

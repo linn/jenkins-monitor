@@ -7,11 +7,22 @@
 
 		var awesomeMeter = _.template('<h2 class="stats col-xs-12 well counter">We&apos;ve been awesome for <%- relativeAwesomeness %>!</h2>');
 
+		var progressBarTemplate = _.template('<div class="progress"></div>');
+
+		var progressBarEntry = _.template('<div class="progress-bar progress-bar-<%- alertState %>" style="width: <%- width %>%"></div>');
+
+		var alertStates = {
+			'problem': 'danger',
+			'running': 'info',
+			'aborted': 'warning',
+			'ok': 'success'
+		};
+
 		var toProblem = function (job) {
 			return {
 				type: 'problem',
 				url: job.url,
-				alertState: 'danger',
+				alertState: alertStates['problem'],
 				iconCss: 'glyphicon glyphicon-thumbs-down',
 				name: job.name
 			};
@@ -21,7 +32,7 @@
 			return {
 				type: 'running',
 				url: job.url,
-				alertState: 'info',
+				alertState: alertStates['running'],
 				iconCss: 'objrotate glyphicon glyphicon-refresh',
 				name: job.name
 			};
@@ -31,7 +42,7 @@
 			return {
 				type: 'aborted',
 				url: job.url,
-				alertState: 'warning',
+				alertState: alertStates['aborted'],
 				iconCss: 'glyphicon glyphicon-stop',
 				name: job.name
 			};
@@ -110,7 +121,7 @@
 		};
 
 		var statusHistory = function () {
-			var history;
+			var history, newestOldStatus;
 			if (supportsHtml5Storage()) {
 				try {
 					history = JSON.parse(localStorage.getItem("statusHistory"));
@@ -119,9 +130,19 @@
 				if (!_.isArray(history)) {
 					return [];
 				}
+				newestOldStatus = _.chain(history)
+					.sortBy('time')
+					.filter(oldStatus)
+					.last()
+					.value();
+				if (newestOldStatus) {
+					newestOldStatus.time = moment().subtract(config.hoursToSummarise, 'hours').format();
+				}
 				return _.chain(history)
 					.sortBy('time')
 					.reject(oldStatus)
+					.unshift(newestOldStatus)
+					.compact()
 					.value();
 			}
 		};
@@ -144,12 +165,12 @@
 		};
 
 		var oldStatus = function (status) {
-			var cutoff = moment().subtract(config.daysToSummarise, 'days');
+			var cutoff = moment().subtract(config.hoursToSummarise, 'hours');
 			return moment(status.time).isBefore(cutoff);
 		};
 
-		var statusSummary = function (statusHistory) {
-			var start = moment(_.first(statusHistory).time).valueOf(),
+		var summarise = function (statusHistory) {
+			var start = moment().subtract(config.hoursToSummarise, 'hours'),
 				end = moment().valueOf();
 			return _.chain(statusHistory)
 					.map(function (instance) {
@@ -161,6 +182,26 @@
 						};
 					})
 					.value();
+		};
+
+		var renderHistoricalStatus = function (active) {
+			var currentPercentage = 0,
+				currentAlertState = 'unknown';
+			$(document).find('.progress').remove();
+			$(document).find('.summary').append(progressBarTemplate());
+			_.each(summarise(statusHistory()), function (statum) {
+				var width = Math.round(statum.fraction * 100) - currentPercentage;
+				$(document).find('.progress').append(progressBarEntry({
+					width: width,
+					alertState: currentAlertState
+				}));
+				currentPercentage += width;
+				currentAlertState = alertStates[statum.status];
+			});
+			$(document).find('.progress').append(progressBarEntry({
+				width: 100 - currentPercentage,
+				alertState: currentAlertState
+			}));
 		};
 
 		var render = function (data) {
@@ -200,7 +241,7 @@
 				}
 			}
 
-			var temp = statusSummary(statusHistory());
+			renderHistoricalStatus();
 		};
 
 		return function () {
@@ -215,5 +256,4 @@
 	var updateStatus = init(config);
 	updateStatus();
 	setInterval(updateStatus, 10000);
-
 })(_, $, config);
