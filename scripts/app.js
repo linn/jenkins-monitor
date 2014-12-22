@@ -18,6 +18,13 @@
 			'ok': 'success'
 		};
 
+		var priority = {
+			'problem': 2,
+			'running': 0,
+			'aborted': 1,
+			'ok': 3
+		};
+
 		var toProblem = function (job) {
 			return {
 				type: 'problem',
@@ -148,7 +155,7 @@
 		};
 
 		var statusThenName = function (job) {
-			return job.type + job.name;
+			return priority[job.type] + job.name;
 		};
 
 		var statusOverview = function (jobs) {
@@ -204,6 +211,10 @@
 			}));
 		};
 
+		var setTheme = function () {
+			$(document).find('#theme').attr('href', config.themes[new Date().getMonth()]);
+		};
+
 		var render = function (data) {
 			var statusThatWeAre,
 				jobs;
@@ -242,6 +253,8 @@
 			}
 
 			renderHistoricalStatus();
+
+			setTheme();
 		};
 
 		return function () {

@@ -1,0 +1,105 @@
+
+html {
+   min-height: 100%;   
+}
+
+body {
+   background: url('./background.jpg') no-repeat center bottom fixed;
+}
+
+.counter::after {
+    content: "";
+    width: 100%;
+    height: 100px;
+    display: block;
+    background-repeat: repeat-x;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 950;
+    -webkit-animation: twinkle 2s linear 0s infinite alternate;
+}
+
+.counter::before {
+    content: "";
+    width: 100%;
+    height: 100px;
+    display: block;
+    background-repeat: repeat-x;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 950;
+    -webkit-animation: twinkle 2s linear 0s infinite alternate;
+}
+
+body::after {
+    content: "";
+    width: 100%;
+    height: 100px;
+    display: block;
+    background-repeat: repeat-x;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 900;
+    background-image: url('./Lights/christmas_lights_cycle_off.png');
+}
+
+body::before {
+    content: "";
+    width: 100%;
+    height: 100px;
+    display: block;
+    background-repeat: repeat-x;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 900;
+    background-image: url('./Lights/christmas_lights_cycle_off.png');
+}
+
+article::after {
+    content: "";
+    width: 101%;
+    height: 100px;
+    display: block;
+    background-size: 40% 40%;
+    background-image: url('./icicles.png');
+    background-repeat: repeat-x;
+    position: relative;
+    top: 20px;
+    left: -4px;
+    z-index: 800;
+    border-radius: 8px;
+}
+
+@-webkit-keyframes twinkle {
+ 0% {
+    background-image: url('./Lights/christmas_lights_cycle_all.png');
+ }
+ 12.5% {
+    background-image: url('./Lights/christmas_lights_cycle_1.png');
+ }
+ 25% {
+    background-image: url('./Lights/christmas_lights_cycle_all.png');
+ }
+ 37.5% {
+    background-image: url('./Lights/christmas_lights_cycle_2.png');
+ }
+ 50% {
+    background-image: url('./Lights/christmas_lights_cycle_all.png');
+ }
+ 62.5% {
+    background-image: url('./Lights/christmas_lights_cycle_2.png');
+ }
+ 75% {
+    background-image: url('./Lights/christmas_lights_cycle_all.png');
+ }
+ 82.5% {
+    background-image: url('./Lights/christmas_lights_cycle_1.png');
+ }
+ 100% {
+    background-image: url('./Lights/christmas_lights_cycle_all.png');
+ }
+}
