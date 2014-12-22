@@ -1,7 +1,7 @@
 (function (_, $, config) {
 	var init = function (config) {
 
-		var jobTemplate = _.template('<article class="job <%- type %>"><h2 class="col-xs-12 alert alert-<%- alertState %>"><div class="col-xs-1"><span class="<%- iconCss %>"></span></div><div class="col-xs-11 name"><%- name %></div></h2></article>');
+		var jobTemplate = _.template('<article title="<%- name %>" class="job <%- type %>"><h2 class="col-xs-12 alert alert-<%- alertState %>"><div class="col-xs-1"><span class="<%- iconCss %>"></span></div><div class="col-xs-11 name"><%- name %></div></h2></article>');
 
 		var seaOfGreen = _.template('<article class="job"><h2 class="col-xs-12 alliswell alert alert-success"><span class="col-xs-1 glyphicon glyphicon-thumbs-up"></span> <div class="col-xs-11 name">Everything Is AWESOME!!!</div></h2></article>');
 
@@ -211,10 +211,6 @@
 			}));
 		};
 
-		var setTheme = function () {
-			$(document).find('#theme').attr('href', config.themes[new Date().getMonth()]);
-		};
-
 		var render = function (data) {
 			var statusThatWeAre,
 				jobs;
@@ -253,8 +249,6 @@
 			}
 
 			renderHistoricalStatus();
-
-			setTheme();
 		};
 
 		return function () {
@@ -266,7 +260,18 @@
 		};
 	};
 
+	var initThemes = function (config) {
+		return function () {
+			$(document).find('#theme').attr('href', config.themes[new Date().getMonth()]);
+		};
+	};
+
 	var updateStatus = init(config);
+	var updateTheme = initThemes(config);
+
 	updateStatus();
+	updateTheme();
+
 	setInterval(updateStatus, 10000);
+	setInterval(updateTheme, 86400000);
 })(_, $, config);

@@ -1,5 +1,14 @@
 .job .alert {
-	margin-bottom: 0
+	margin-bottom: 0;
+}
+
+.name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-wrap: break-word;
+    display: inline-block;
+    vertical-align: top;
 }
 
 .stats {
