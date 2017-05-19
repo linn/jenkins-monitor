@@ -1,0 +1,24 @@
+
+html {
+   min-height: 100%;
+}
+
+body {
+   background: url('./background.jpg') no-repeat center bottom fixed;
+   background-size: auto 100%
+}
+
+article::after {
+    content: "";
+    width: 101%;
+    height: 100px;
+    display: block;
+    background-size: 15% 100%;
+    background-image: url('./blood.png');
+    background-repeat: repeat-x;
+    position: relative;
+    top: 18px;
+    left: -4px;
+    z-index: 800;
+    border-radius: 8px;
+}

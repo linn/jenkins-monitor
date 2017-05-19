@@ -1,4 +1,14 @@
 (function (_, $, config) {
+	var announced = false;
+
+	function supportsHtml5Storage() {
+		try {
+			return 'localStorage' in window && window.localStorage !== null;
+		} catch (e) {
+			return false;
+		}
+	}
+
 	var init = function (config) {
 
 		var jobTemplate = _.template('<article title="<%- name %>" class="job <%- type %>"><h2 class="col-xs-12 alert alert-<%- alertState %>"><div class="col-xs-1"><span class="<%- iconCss %>"></span></div><div class="col-xs-11 name"><%- name %></div></h2></article>');
@@ -29,7 +39,7 @@
 			return {
 				type: 'problem',
 				url: job.url,
-				alertState: alertStates['problem'],
+				alertState: alertStates.problem,
 				iconCss: 'glyphicon glyphicon-thumbs-down',
 				name: job.name
 			};
@@ -39,7 +49,7 @@
 			return {
 				type: 'running',
 				url: job.url,
-				alertState: alertStates['running'],
+				alertState: alertStates.running,
 				iconCss: 'objrotate glyphicon glyphicon-refresh',
 				name: job.name
 			};
@@ -49,7 +59,7 @@
 			return {
 				type: 'aborted',
 				url: job.url,
-				alertState: alertStates['aborted'],
+				alertState: alertStates.aborted,
 				iconCss: 'glyphicon glyphicon-stop',
 				name: job.name
 			};
@@ -82,14 +92,6 @@
 			}
 		};
 
-		var supportsHtml5Storage = function() {
-			try {
-				return 'localStorage' in window && window['localStorage'] !== null;
-			} catch (e) {
-				return false;
-			}
-		};
-
 		var storeFailureTime = function () {
 			if (supportsHtml5Storage()) {
 				localStorage.setItem("lastknownFailureTime", moment().utc());
@@ -105,7 +107,7 @@
 			}
 		};
 
-		var updateStatus = function (status) {
+		var updateStatus = function (status, announceCb) {
 			var history, mostRecentStatus;
 			if (supportsHtml5Storage()) {
 				try {
@@ -117,6 +119,7 @@
 				}
 				mostRecentStatus = _.last(history);
 				if (!mostRecentStatus || mostRecentStatus.status !== status) {
+					announceCb(true);
 					history.push({
 						time: moment().utc(),
 						status: status
@@ -211,18 +214,7 @@
 			}));
 		};
 
-		var render = function (data) {
-			var statusThatWeAre,
-				jobs;
-
-			jobs = _.chain(data.jobs)
-				.map(toJob)
-				.compact()
-				.reject(unwantedJobs)
-				.reject(nonRunningNightlyJobs)
-				.sortBy(statusThenName)
-				.value();
-
+		var render = function (jobs, currentStatus) {
 			$(document).find('.job').remove();
 			if (jobs.length > 0) {
 				_.each(jobs, function (job) {
@@ -233,29 +225,65 @@
 				$(document).find('.jobs').append(seaOfGreen());
 			}
 
-			statusThatWeAre = statusOverview(jobs);
-			updateStatus(statusThatWeAre);
-
-			if (statusThatWeAre === "problem") {
-				storeFailureTime();
-			}
-
 			$(document).find('.stats').remove();
-			if (statusThatWeAre !==  'running' ) {
+			if (currentStatus !==  'running' ) {
 				var lastFailureTime = getLastFailureTime();
 				if (lastFailureTime && (moment.utc() - lastFailureTime) > 60000) {
 					$(document).find('.jobs').append(awesomeMeter({ relativeAwesomeness: lastFailureTime.fromNow(true) }));
 				}
 			}
 
-			renderHistoricalStatus();
+			// renderHistoricalStatus();
+		};
+
+		var announcerCallback = function(status) {
+			var towerColour = {
+				'problem': 'red',
+				'aborted': 'amber',
+				'running': 'green',
+				'ok': 'green'
+			};
+			return function (flash) {
+				announced = true;
+				$.ajax({
+					dataType: 'json',
+					contentType: "application/json",
+					type: "PUT",
+					url: 'http://10.2.14.156/tower.py',
+					data: '{"status": "' + towerColour[status] + '", "flash": "' + (flash ? 'yes' : 'no') + '"}'
+				});
+			};
+		};
+
+		var processData = function (data) {
+			var jobs = _.chain(data.jobs)
+				.map(toJob)
+				.compact()
+				.reject(unwantedJobs)
+				.reject(nonRunningNightlyJobs)
+				.sortBy(statusThenName)
+				.value(),
+			statusThatWeAre = statusOverview(jobs),
+			announcer = announcerCallback(statusThatWeAre);
+
+			if (!announced) {
+				announcer(false);
+			}
+
+			updateStatus(statusThatWeAre, announcer);
+
+			if (statusThatWeAre === "problem") {
+				storeFailureTime();
+			}
+
+			render(jobs, statusThatWeAre);
 		};
 
 		return function () {
 			$.ajax({
 				dataType: 'jsonp',
 				url: config.jenkinsRoot + 'api/json?jsonp=?',
-				success: render
+				success: processData
 			});
 		};
 	};
